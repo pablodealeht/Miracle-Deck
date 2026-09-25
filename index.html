@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Miracle Deck — tu tablet o celular como botonera para la PC</title>
+<meta name="description" content="Convertí tu tablet o celular Android en una botonera para tu PC con Windows: abrí programas y juegos, controlá la música, OBS, el volumen y más con un toque.">
+<meta property="og:title" content="Miracle Deck">
+<meta property="og:description" content="Tu tablet o celular como botonera para la PC.">
+<link rel="icon" href="app.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161B; --surface: #1B1E25; --surface-alt: #232730; --border: #2C313C;
+    --text: #EEF0F4; --muted: #9AA1AE; --accent: #3FCBB0; --accent-hover: #5AD6BF; --on-accent: #0B201C;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 Geist, system-ui, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header { display: flex; align-items: center; gap: 10px; padding: 20px 0; }
+  header img { width: 28px; height: 28px; }
+  header strong { font-size: 18px; }
+  header nav { margin-left: auto; display: flex; gap: 6px; }
+  header nav button { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  header nav button.on { color: var(--text); border-color: var(--accent); }
+
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 40px 0 64px; }
+  h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.08; margin: 0 0 18px; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .lead { color: var(--muted); font-size: 18px; margin: 0 0 28px; max-width: 34em; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; border-radius: 12px; padding: 14px 22px; font-weight: 600; text-decoration: none; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-hover); }
+  .btn.ghost { background: var(--surface-alt); color: var(--text); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 12px; }
+
+  /* Tablet de ejemplo hecha con CSS */
+  .device { background: #0C0E12; border: 10px solid #2A2E37; border-radius: 28px; padding: 14px; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .key { aspect-ratio: 1.15; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 600; color: #fff; }
+  .key i { font-style: normal; font-size: 26px; line-height: 1; }
+  .bar { display: flex; gap: 8px; margin-top: 12px; }
+  .bar span { background: var(--surface-alt); border-radius: 999px; padding: 6px 12px; font-size: 11px; color: var(--muted); }
+  .bar span.on { background: #2E86DE; color: #fff; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 28px; margin: 0 0 24px; letter-spacing: -0.01em; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .card b { display: block; margin-bottom: 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .steps { counter-reset: s; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .steps .card::before { counter-increment: s; content: counter(s); display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; margin-bottom: 12px; }
+  .req { color: var(--muted); }
+  .req li { margin: 4px 0; }
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+
+  /* Abierta desde un celular: el instalador es para Windows */
+  .mobile-box { display: none; background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+  .mobile-box p { margin: 0 0 14px; color: var(--muted); }
+  .mobile-box .url { font-family: "Geist Mono", monospace; color: var(--text); font-size: 17px; word-break: break-all; }
+  body.mobile .mobile-box { display: block; }
+  body.mobile .pc-only { display: none; }
+
+  @media (max-width: 820px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; padding-top: 16px; }
+    .features, .steps { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="app.ico" alt="">
+    <strong>Miracle Deck</strong>
+    <nav aria-label="Idioma">
+      <button data-lang="es">ES</button><button data-lang="en">EN</button><button data-lang="pt">PT</button>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1 data-t="title">Tu tablet o celular, <span>tu botonera</span> para la PC.</h1>
+      <p class="lead" data-t="lead">Abrí programas y juegos, controlá la música, el volumen, OBS y mucho más con un toque. Una botonera de streaming, pero con el Android que ya tenés.</p>
+
+      <div class="mobile-box">
+        <b data-t="mobileTitle">Abrí esta página en tu PC</b>
+        <p data-t="mobileText">El programa es para Windows: instalalo en la PC y después conectá este celular. Escribí esta dirección en el navegador de la PC:</p>
+        <p class="url" id="url"></p>
+        <div class="cta">
+          <button class="btn primary" id="share" data-t="share">Mandarme el link</button>
+        </div>
+      </div>
+
+      <div class="cta pc-only">
+        <a class="btn primary" href="https://github.com/pablodealeht/Miracle-Deck/releases/latest/download/MiracleDeck-win-Setup.exe" data-t="download">Descargar para Windows</a>
+        <a class="btn ghost" id="play" href="#" hidden data-t="play">App para Android</a>
+      </div>
+      <p class="note pc-only" data-t="free">Gratis · Windows 10 u 11 · no pide permisos de administrador</p>
+    </div>
+
+    <div class="device" aria-hidden="true">
+      <div class="grid">
+        <div class="key" style="background:#1DB954"><i>♫</i><span data-t="kSpotify">Spotify</span></div>
+        <div class="key" style="background:#C0392B"><i>●</i><span data-t="kRec">Grabar</span></div>
+        <div class="key" style="background:#2E86DE"><i>🔊</i><span data-t="kVol">Volumen</span></div>
+        <div class="key" style="background:#8E44AD"><i>🎤</i><span data-t="kMic">Micrófono</span></div>
+        <div class="key" style="background:#2C3E50"><i>🎮</i><span>Steam</span></div>
+        <div class="key" style="background:#16A085"><i>⌨</i><span data-t="kMacro">Macro</span></div>
+        <div class="key" style="background:#E67E22"><i>⏱</i><span>Pomodoro</span></div>
+        <div class="key" style="background:#6C5CE7"><i>🔒</i><span data-t="kLock">Bloquear</span></div>
+      </div>
+      <div class="bar"><span class="on" data-t="kMain">Principal</span><span>OBS</span><span data-t="kMusic">Música</span></div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2 data-t="whatTitle">Qué podés hacer</h2>
+    <div class="features">
+      <div class="card"><b data-t="f1">Abrir todo con un toque</b><p data-t="f1d">Programas, juegos de Steam, carpetas y páginas web. Si ya están abiertos, los trae al frente.</p></div>
+      <div class="card"><b data-t="f2">Música y audio</b><p data-t="f2d">Play, pausa y temas; volumen, micrófono, salida de audio y un soundboard.</p></div>
+      <div class="card"><b data-t="f3">Streaming con OBS</b><p data-t="f3d">Escenas, grabar, transmitir y silenciar fuentes, con el estado en vivo.</p></div>
+      <div class="card"><b data-t="f4">Atajos y macros</b><p data-t="f4d">Combinaciones de teclas, textos y macros que podés grabar desde el teclado.</p></div>
+      <div class="card"><b data-t="f5">Touchpad y portapapeles</b><p data-t="f5d">Usá la tablet como mouse y pasá textos entre el celular y la PC.</p></div>
+      <div class="card"><b data-t="f6">A tu gusto</b><p data-t="f6d">Páginas, carpetas, colores, íconos y grupos. Se configura cómodo desde la PC.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 data-t="howTitle">Cómo empezar</h2>
+    <div class="steps">
+      <div class="card"><b data-t="s1">Instalá el programa en la PC</b><p data-t="s1d">Es gratis. Queda en la bandeja, junto al reloj.</p></div>
+      <div class="card"><b data-t="s2">Instalá la app en el Android</b><p data-t="s2d">En la tablet o el celular, en el mismo Wi-Fi que la PC.</p></div>
+      <div class="card"><b data-t="s3">Conectalos</b><p data-t="s3d">La app encuentra la PC sola, o escaneá el código QR del programa. Sin escribir IP ni claves.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 data-t="reqTitle">Requisitos</h2>
+    <ul class="req">
+      <li data-t="r1">PC con Windows 10 u 11.</li>
+      <li data-t="r2">Tablet o celular con Android 5 o superior.</li>
+      <li data-t="r3">Los dos en la misma red Wi-Fi.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">© Miracle Deck · <a href="https://github.com/pablodealeht/Miracle-Deck/releases" data-t="versions">Versiones</a></div>
+</footer>
+
+<script>
+  // Dirección de esta página y de la app en Play (vacía hasta que la app se publique en producción).
+  const PAGE_URL = location.origin + location.pathname.replace(/index\.html$/, "");
+  const PLAY_URL = "";
+
+  const T = {
+    en: {
+      title: 'Your tablet or phone, <span>your button deck</span> for the PC.',
+      lead: "Open programs and games, control music, volume, OBS and much more with one tap. A streaming button deck, but with the Android you already have.",
+      mobileTitle: "Open this page on your PC",
+      mobileText: "The program is for Windows: install it on your PC and then connect this phone. Type this address in the PC's browser:",
+      share: "Send me the link", download: "Download for Windows", play: "Android app",
+      free: "Free · Windows 10 or 11 · no administrator rights needed",
+      kSpotify: "Spotify", kRec: "Record", kVol: "Volume", kMic: "Mic", kMacro: "Macro", kLock: "Lock", kMain: "Main", kMusic: "Music",
+      whatTitle: "What you can do",
+      f1: "Open anything with a tap", f1d: "Programs, Steam games, folders and websites. If they're already open, it brings them to the front.",
+      f2: "Music and audio", f2d: "Play, pause and tracks; volume, microphone, audio output and a soundboard.",
+      f3: "Streaming with OBS", f3d: "Scenes, recording, streaming and muting sources, with live status.",
+      f4: "Shortcuts and macros", f4d: "Key combinations, texts and macros you can record from the keyboard.",
+      f5: "Touchpad and clipboard", f5d: "Use the tablet as a mouse and move text between your phone and the PC.",
+      f6: "Your way", f6d: "Pages, folders, colors, icons and groups. Comfortably set up from the PC.",
+      howTitle: "How to start",
+      s1: "Install the program on the PC", s1d: "It's free. It lives in the tray, next to the clock.",
+      s2: "Install the app on Android", s2d: "On the tablet or phone, on the same Wi-Fi as the PC.",
+      s3: "Connect them", s3d: "The app finds the PC by itself, or scan the program's QR code. No IPs or keys to type.",
+      reqTitle: "Requirements", r1: "PC with Windows 10 or 11.", r2: "Tablet or phone with Android 5 or later.", r3: "Both on the same Wi-Fi network.",
+      versions: "Versions"
+    },
+    pt: {
+      title: 'Seu tablet ou celular, <span>seu painel de botões</span> para o PC.',
+      lead: "Abra programas e jogos, controle a música, o volume, o OBS e muito mais com um toque. Um painel de botões de streaming, mas com o Android que você já tem.",
+      mobileTitle: "Abra esta página no seu PC",
+      mobileText: "O programa é para Windows: instale no PC e depois conecte este celular. Digite este endereço no navegador do PC:",
+      share: "Me mandar o link", download: "Baixar para Windows", play: "App para Android",
+      free: "Grátis · Windows 10 ou 11 · não pede permissão de administrador",
+      kSpotify: "Spotify", kRec: "Gravar", kVol: "Volume", kMic: "Microfone", kMacro: "Macro", kLock: "Bloquear", kMain: "Principal", kMusic: "Música",
+      whatTitle: "O que você pode fazer",
+      f1: "Abrir tudo com um toque", f1d: "Programas, jogos da Steam, pastas e sites. Se já estiverem abertos, traz para a frente.",
+      f2: "Música e áudio", f2d: "Play, pausa e faixas; volume, microfone, saída de áudio e um soundboard.",
+      f3: "Streaming com OBS", f3d: "Cenas, gravar, transmitir e silenciar fontes, com o status ao vivo.",
+      f4: "Atalhos e macros", f4d: "Combinações de teclas, textos e macros que você pode gravar pelo teclado.",
+      f5: "Touchpad e área de transferência", f5d: "Use o tablet como mouse e passe textos entre o celular e o PC.",
+      f6: "Do seu jeito", f6d: "Páginas, pastas, cores, ícones e grupos. Configurado com conforto pelo PC.",
+      howTitle: "Como começar",
+      s1: "Instale o programa no PC", s1d: "É grátis. Fica na bandeja, perto do relógio.",
+      s2: "Instale o app no Android", s2d: "No tablet ou celular, no mesmo Wi-Fi do PC.",
+      s3: "Conecte os dois", s3d: "O app encontra o PC sozinho, ou escaneie o código QR do programa. Sem digitar IP nem chaves.",
+      reqTitle: "Requisitos", r1: "PC com Windows 10 ou 11.", r2: "Tablet ou celular com Android 5 ou superior.", r3: "Os dois na mesma rede Wi-Fi.",
+      versions: "Versões"
+    }
+  };
+
+  // El texto original (español) queda guardado para poder volver.
+  const original = {};
+  document.querySelectorAll("[data-t]").forEach(el => original[el.dataset.t] = el.innerHTML);
+
+  function setLang(lang) {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-t]").forEach(el => {
+      const k = el.dataset.t;
+      el.innerHTML = lang !== "es" && T[lang] && T[lang][k] ? T[lang][k] : original[k];
+    });
+    document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.lang === lang));
+    try { localStorage.setItem("lang", lang); } catch (e) {}
+  }
+
+  let lang = "";
+  try { lang = localStorage.getItem("lang") || ""; } catch (e) {}
+  if (!lang) {
+    const l = (navigator.language || "es").slice(0, 2);
+    lang = l === "es" || l === "pt" ? l : "en";
+  }
+  setLang(lang);
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => setLang(b.dataset.lang));
+
+  // En un celular o tablet no tiene sentido bajar el instalador de Windows: se muestra cómo llevar el link a la PC.
+  const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (mobile) document.body.classList.add("mobile");
+  document.getElementById("url").textContent = PAGE_URL.replace(/^https?:\/\//, "");
+  document.getElementById("share").onclick = async () => {
+    const data = { title: "Miracle Deck", text: T[lang] ? T[lang].mobileTitle : original.mobileTitle, url: PAGE_URL };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else { await navigator.clipboard.writeText(PAGE_URL); alert(PAGE_URL); }
+    } catch (e) {}
+  };
+  if (PLAY_URL) { const p = document.getElementById("play"); p.href = PLAY_URL; p.hidden = false; }
+</script>
+</body>
+</html>
