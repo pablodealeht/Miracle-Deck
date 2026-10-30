@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Logo de Miracle Deck: la botonera vista de arriba, con una tecla menta encendida y una chispa. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E2629"/><stop offset="1" stop-color="#101416"/></linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FE0C6"/><stop offset="1" stop-color="#3FCBB0"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3FCBB0" stop-opacity=".55"/><stop offset="1" stop-color="#3FCBB0" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="100" height="100" rx="23" fill="url(#bg)"/>
+  <g fill="#2A3438">
+    <rect x="14" y="14" width="20" height="20" rx="6"/><rect x="40" y="14" width="20" height="20" rx="6"/>
+    <rect x="14" y="40" width="20" height="20" rx="6"/><rect x="66" y="40" width="20" height="20" rx="6"/>
+    <rect x="14" y="66" width="20" height="20" rx="6"/><rect x="40" y="66" width="20" height="20" rx="6"/><rect x="66" y="66" width="20" height="20" rx="6"/>
+  </g>
+  <circle cx="50" cy="50" r="24" fill="url(#glow)"/>
+  <rect x="40" y="40" width="20" height="20" rx="6" fill="url(#mint)"/>
+  <path d="M76 12 L78.6 21.4 L88 24 L78.6 26.6 L76 36 L73.4 26.6 L64 24 L73.4 21.4 Z" fill="#9CFBE8"/>
+</svg>
