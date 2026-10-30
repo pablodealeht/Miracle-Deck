@@ -49,12 +49,30 @@
   .bar span { background: var(--surface-alt); border-radius: 999px; padding: 6px 12px; font-size: 11px; color: var(--muted); }
   .bar span.on { background: #2E86DE; color: #fff; }
 
+  /* Demo viva: los botones se hunden con un resorte, Miri reacciona y el visualizador baila */
+  .device { position: relative; }
+  .key { position: relative; overflow: hidden; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; will-change: transform; border: 0; font: inherit; }
+  .key .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,.35); transform: scale(0); pointer-events: none; animation: ripple .55s ease-out forwards; }
+  @keyframes ripple { to { transform: scale(1); opacity: 0; } }
+  .key .viz { display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+  .key .viz b { display: block; width: 5px; border-radius: 3px; background: #fff; height: 3px; transition: height .08s; }
+  .key.ok { box-shadow: 0 0 0 3px #2ecc71 inset; }
+  .bar span { cursor: pointer; }
+  .bar canvas { margin-left: auto; width: 44px; height: 44px; margin-top: -8px; cursor: pointer; }
+  .demo-toast { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%) scale(.6); opacity: 0; background: rgba(12,21,18,.95);
+    border: 1px solid #2A3B36; color: #E8F2EF; font-size: 13px; padding: 8px 14px; border-radius: 16px; white-space: nowrap; pointer-events: none; }
+  .finger { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.28); border: 2px solid rgba(255,255,255,.6);
+    pointer-events: none; opacity: 0; transition: left .5s cubic-bezier(.3,.7,.3,1), top .5s cubic-bezier(.3,.7,.3,1), opacity .3s; }
+  @media (prefers-reduced-motion: reduce) { .key .ripple, .finger { display: none; } }
+
   section { padding: 56px 0; border-top: 1px solid var(--border); }
   h2 { font-size: 28px; margin: 0 0 24px; letter-spacing: -0.01em; }
   .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
   .card b { display: block; margin-bottom: 6px; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .card.wide { grid-column: 1 / -1; border-color: var(--accent); }
+  .card.wide q { display: block; margin-top: 10px; color: var(--text); font-style: italic; }
   .steps { counter-reset: s; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .steps .card::before { counter-increment: s; content: counter(s); display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; margin-bottom: 12px; }
   .req { color: var(--muted); }
@@ -77,7 +95,7 @@
 <body>
 <div class="wrap">
   <header>
-    <img src="app.ico" alt="">
+    <img src="logo.svg" alt="">
     <strong>Miracle Deck</strong>
     <nav aria-label="Idioma">
       <button data-lang="es">ES</button><button data-lang="en">EN</button><button data-lang="pt">PT</button>
@@ -105,18 +123,12 @@
       <p class="note pc-only" data-t="free">Gratis · Windows 10 u 11 · no pide permisos de administrador</p>
     </div>
 
-    <div class="device" aria-hidden="true">
-      <div class="grid">
-        <div class="key" style="background:#1DB954"><i>♫</i><span data-t="kSpotify">Spotify</span></div>
-        <div class="key" style="background:#C0392B"><i>●</i><span data-t="kRec">Grabar</span></div>
-        <div class="key" style="background:#2E86DE"><i>🔊</i><span data-t="kVol">Volumen</span></div>
-        <div class="key" style="background:#8E44AD"><i>🎤</i><span data-t="kMic">Micrófono</span></div>
-        <div class="key" style="background:#2C3E50"><i>🎮</i><span>Steam</span></div>
-        <div class="key" style="background:#16A085"><i>⌨</i><span data-t="kMacro">Macro</span></div>
-        <div class="key" style="background:#E67E22"><i>⏱</i><span>Pomodoro</span></div>
-        <div class="key" style="background:#6C5CE7"><i>🔒</i><span data-t="kLock">Bloquear</span></div>
-      </div>
-      <div class="bar"><span class="on" data-t="kMain">Principal</span><span>OBS</span><span data-t="kMusic">Música</span></div>
+    <!-- Demo viva: se puede tocar (o mirar cómo la toca sola) -->
+    <div class="device" id="demo" aria-label="Demo de Miracle Deck">
+      <div class="grid" id="demoGrid"></div>
+      <div class="bar" id="demoTabs"><span class="on" data-page="0" data-t="kMain">Principal</span><span data-page="1">OBS</span><span data-page="2" data-t="kMusic">Música</span><canvas id="demoMiri" aria-hidden="true"></canvas></div>
+      <div class="demo-toast" id="demoToast"></div>
+      <div class="finger" id="finger"></div>
     </div>
   </div>
 </div>
@@ -131,6 +143,10 @@
       <div class="card"><b data-t="f4">Atajos y macros</b><p data-t="f4d">Combinaciones de teclas, textos y macros que podés grabar desde el teclado.</p></div>
       <div class="card"><b data-t="f5">Touchpad y portapapeles</b><p data-t="f5d">Usá la tablet como mouse y pasá textos entre el celular y la PC.</p></div>
       <div class="card"><b data-t="f6">A tu gusto</b><p data-t="f6d">Páginas, carpetas, colores, íconos y grupos. Se configura cómodo desde la PC.</p></div>
+      <div class="card"><b data-t="f7">Miri, tu compañera</b><p data-t="f7d">Baila con tu música, se duerme de noche, festeja tus logros y se gana accesorios mientras usás la botonera.</p></div>
+      <div class="card"><b data-t="f8">Hecho para tu stream</b><p data-t="f8d">Miri en una esquina del stream (fuente de navegador en OBS), visualizador de música, contadores y clips de Twitch.</p></div>
+      <div class="card"><b data-t="f9">Con Claude Code y Codex</b><p data-t="f9d">Mirá qué está haciendo la IA y permití o rechazá sus pedidos desde la tablet, deslizando.</p></div>
+      <div class="card wide"><b data-t="f10">Pedíselo a una IA</b><p data-t="f10d">Claude o Codex arman tu botonera por vos: botones con sus íconos, páginas enteras y escenas de OBS. Antes de cambiar algo, te muestra la lista y vos aceptás. (Pro)</p><q data-t="f10q">«Armame una página para stream con OBS, mi micrófono, Spotify y Discord.»</q></div>
     </div>
   </div>
 </section>
@@ -182,6 +198,10 @@
       f4: "Shortcuts and macros", f4d: "Key combinations, texts and macros you can record from the keyboard.",
       f5: "Touchpad and clipboard", f5d: "Use the tablet as a mouse and move text between your phone and the PC.",
       f6: "Your way", f6d: "Pages, folders, colors, icons and groups. Comfortably set up from the PC.",
+      f7: "Miri, your sidekick", f7d: "Dances to your music, falls asleep at night, celebrates your achievements and earns accessories as you use the deck.",
+      f8: "Made for streaming", f8d: "Miri in a corner of your stream (OBS browser source), music visualizer, counters and Twitch clips.",
+      f9: "With Claude Code and Codex", f9d: "See what the AI is doing and allow or deny its requests from the tablet, with a swipe.",
+      f10: "Just ask an AI", f10d: "Claude or Codex build your deck for you: buttons with their icons, whole pages and OBS scenes. Before changing anything, it shows you the list and you accept. (Pro)", f10q: "“Make me a streaming page with OBS, my microphone, Spotify and Discord.”",
       howTitle: "How to start",
       s1: "Install the program on the PC", s1d: "It's free. It lives in the tray, next to the clock.",
       s2: "Install the app on Android", s2d: "On the tablet or phone, on the same Wi-Fi as the PC.",
@@ -204,6 +224,10 @@
       f4: "Atalhos e macros", f4d: "Combinações de teclas, textos e macros que você pode gravar pelo teclado.",
       f5: "Touchpad e área de transferência", f5d: "Use o tablet como mouse e passe textos entre o celular e o PC.",
       f6: "Do seu jeito", f6d: "Páginas, pastas, cores, ícones e grupos. Configurado com conforto pelo PC.",
+      f7: "Miri, sua companheira", f7d: "Dança com a sua música, dorme à noite, comemora suas conquistas e ganha acessórios enquanto você usa o painel.",
+      f8: "Feito para o seu stream", f8d: "Miri num canto do stream (fonte de navegador no OBS), visualizador de música, contadores e clipes da Twitch.",
+      f9: "Com Claude Code e Codex", f9d: "Veja o que a IA está fazendo e permita ou recuse os pedidos dela pelo tablet, deslizando.",
+      f10: "Peça a uma IA", f10d: "O Claude ou o Codex montam seu painel por você: botões com seus ícones, páginas inteiras e cenas do OBS. Antes de mudar algo, ele mostra a lista e você aceita. (Pro)", f10q: "“Monte uma página para stream com o OBS, meu microfone, Spotify e Discord.”",
       howTitle: "Como começar",
       s1: "Instale o programa no PC", s1d: "É grátis. Fica na bandeja, perto do relógio.",
       s2: "Instale o app no Android", s2d: "No tablet ou celular, no mesmo Wi-Fi do PC.",
@@ -248,6 +272,144 @@
     } catch (e) {}
   };
   if (PLAY_URL) { const p = document.getElementById("play"); p.href = PLAY_URL; p.hidden = false; }
+</script>
+<script src="miri.js"></script>
+<script>
+  // ---------- Demo viva de la tablet: botones con resorte, Miri, visualizador y un dedo que toca solo ----------
+  // Cada botón: [ícono, nombre es, en, pt, color, acción]. Acciones: music (play/pausa), rec, live, clip, sound, counter, toast.
+  const DEMO_PAGES = [
+    [["♫", "Spotify", "Spotify", "Spotify", "#1DB954", "music"], ["●", "Grabar", "Record", "Gravar", "#C0392B", "rec"],
+     ["🔊", "Volumen", "Volume", "Volume", "#2E86DE", "toast"], ["🎤", "Micrófono", "Mic", "Microfone", "#8E44AD", "toast"],
+     ["🎮", "Steam", "Steam", "Steam", "#2C3E50", "toast"], ["viz", "Visualizador", "Visualizer", "Visualizador", "#1B2330", "music"],
+     ["⏱", "Pomodoro", "Pomodoro", "Pomodoro", "#E67E22", "toast"], ["🔒", "Bloquear", "Lock", "Bloquear", "#6C5CE7", "toast"]],
+    [["🎮", "Juego", "Game", "Jogo", "#2E86DE", "toast"], ["💬", "Charla", "Just chatting", "Conversa", "#16A085", "toast"],
+     ["●", "Grabar", "Record", "Gravar", "#C0392B", "rec"], ["📡", "En vivo", "Go live", "Ao vivo", "#E74C3C", "live"],
+     ["✂", "Clip", "Clip", "Clipe", "#8E44AD", "clip"], ["🔔", "Sonido", "Sound", "Som", "#D35400", "sound"],
+     ["➕", "Muertes", "Deaths", "Mortes", "#2C3E50", "counter"], ["🎤", "Mic OBS", "OBS mic", "Mic OBS", "#7F8C8D", "toast"]],
+    [["⏮", "Anterior", "Previous", "Anterior", "#2C3E50", "toast"], ["⏯", "Play / pausa", "Play / pause", "Play / pausa", "#1DB954", "music"],
+     ["⏭", "Siguiente", "Next", "Próxima", "#2C3E50", "toast"], ["viz", "Visualizador", "Visualizer", "Visualizador", "#1B2330", "music"],
+     ["🔉", "Bajar", "Down", "Abaixar", "#2E86DE", "toast"], ["🔊", "Subir", "Up", "Aumentar", "#2E86DE", "toast"],
+     ["♥", "Me gusta", "Like", "Curtir", "#E84393", "toast"], ["🎚", "Mezclador", "Mixer", "Mixer", "#6C5CE7", "toast"]],
+  ];
+  const DEMO_T = {
+    es: { pc: "En tu PC: ", music: ["▶ Suena la música", "❚❚ Música en pausa"], rec: ["● Grabando en OBS", "■ Grabación detenida"],
+          live: ["📡 En vivo", "■ Transmisión terminada"], clip: "✂ ¡Clip creado!", sound: "🔔 ¡Ding!", counter: "Muertes: " },
+    en: { pc: "On your PC: ", music: ["▶ Music playing", "❚❚ Music paused"], rec: ["● Recording in OBS", "■ Recording stopped"],
+          live: ["📡 Live", "■ Stream ended"], clip: "✂ Clip created!", sound: "🔔 Ding!", counter: "Deaths: " },
+    pt: { pc: "No seu PC: ", music: ["▶ Música tocando", "❚❚ Música pausada"], rec: ["● Gravando no OBS", "■ Gravação parada"],
+          live: ["📡 Ao vivo", "■ Transmissão encerrada"], clip: "✂ Clipe criado!", sound: "🔔 Ding!", counter: "Mortes: " },
+  };
+  const demoReduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const demoGrid = document.getElementById("demoGrid"), demoToast = document.getElementById("demoToast"), finger = document.getElementById("finger");
+  const demoView = new MiriView(document.getElementById("demoMiri"));
+  const demo = { page: 0, music: false, rec: false, live: false, deaths: 0, lastTouch: 0 };
+  const demoLang = () => (DEMO_T[document.documentElement.lang] ? document.documentElement.lang : "en");
+  const keySprings = new Map();
+  const toastSpring = new MiriSpring(0, 0.4, 0.55);
+  let toastUntil = 0;
+
+  function demoSay(text) { demoToast.textContent = text; toastSpring.target = 1; toastUntil = performance.now() + 1800; }
+  function demoMood() { demoView.miri.setState(demo.rec || demo.live ? "rec" : demo.music ? "dance" : "idle"); }
+
+  function spring(el) {
+    let s = keySprings.get(el);
+    if (!s) { s = { s: new MiriSpring(1, 0.32, 0.5), wait: 0 }; keySprings.set(el, s); }
+    return s;
+  }
+
+  function renderDemo(animate) {
+    demoGrid.innerHTML = "";
+    const li = { es: 1, en: 2, pt: 3 }[demoLang()] || 2;
+    DEMO_PAGES[demo.page].forEach((k, i) => {
+      const el = document.createElement("button");
+      el.className = "key"; el.style.background = k[4]; el.dataset.action = k[5];
+      if (k[0] === "viz") {
+        const viz = document.createElement("div"); viz.className = "viz";
+        for (let b = 0; b < 8; b++) viz.appendChild(document.createElement("b"));
+        el.appendChild(viz);
+      } else { const icon = document.createElement("i"); icon.textContent = k[0]; el.appendChild(icon); }
+      const name = document.createElement("span");
+      name.textContent = k[5] === "counter" ? k[li] + " " + demo.deaths : k[li];
+      el.appendChild(name);
+      el.addEventListener("pointerdown", e => { demo.lastTouch = performance.now(); press(el, e); });
+      demoGrid.appendChild(el);
+      if (animate && !demoReduce) { const s = spring(el); s.s.value = 0.75; s.s.target = 1; s.wait = i * 0.03; el.style.transform = "scale(.75)"; }
+    });
+    document.querySelectorAll("#demoTabs span").forEach(t => t.classList.toggle("on", Number(t.dataset.page) === demo.page));
+  }
+
+  function press(el, e) {
+    const s = spring(el);
+    s.s.configure(0.3, 0.38); s.s.value = 0.9; s.s.target = 1;
+    if (e && !demoReduce) {
+      const r = el.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2, dot = document.createElement("span");
+      dot.className = "ripple"; dot.style.width = dot.style.height = size + "px";
+      dot.style.left = (e.clientX - r.left - size / 2) + "px"; dot.style.top = (e.clientY - r.top - size / 2) + "px";
+      el.appendChild(dot); setTimeout(() => dot.remove(), 600);
+    }
+    el.classList.add("ok"); setTimeout(() => el.classList.remove("ok"), 600);
+    const t = DEMO_T[demoLang()], label = el.querySelector("span").textContent;
+    demoView.miri.poke();
+    switch (el.dataset.action) {
+      case "music": demo.music = !demo.music; demoSay(t.music[demo.music ? 0 : 1]); break;
+      case "rec": demo.rec = !demo.rec; demoSay(t.rec[demo.rec ? 0 : 1]); break;
+      case "live": demo.live = !demo.live; demoSay(t.live[demo.live ? 0 : 1]); break;
+      case "clip": demoView.miri.react("party", 2.5); demoSay(t.clip); break;
+      case "sound": demoView.miri.react("alert", 1.2); demoView.miri.beat(); demoSay(t.sound); break;
+      case "counter": demo.deaths++; el.querySelector("span").textContent = label.replace(/\d+$/, demo.deaths); demoSay(t.counter + demo.deaths); break;
+      default: demoSay("✓ " + t.pc + label);
+    }
+    demoMood();
+  }
+
+  document.querySelectorAll("#demoTabs span").forEach(t => t.addEventListener("click", () => {
+    demo.lastTouch = performance.now();
+    demo.page = Number(t.dataset.page); renderDemo(true);
+  }));
+
+  // El dedo fantasma: si nadie toca la demo, la toca sola cada tanto.
+  let ghostAt = performance.now() + 2500;
+  function ghost(now) {
+    if (now < ghostAt || now - demo.lastTouch < 9000 || demoReduce) return;
+    ghostAt = now + 2300;
+    const keys = [...demoGrid.children];
+    if (Math.random() < 0.18) { demo.page = (demo.page + 1) % DEMO_PAGES.length; renderDemo(true); return; }
+    const el = keys[(Math.random() * keys.length) | 0];
+    const box = document.getElementById("demo").getBoundingClientRect(), r = el.getBoundingClientRect();
+    finger.style.left = (r.left - box.left + r.width / 2 - 17) + "px";
+    finger.style.top = (r.top - box.top + r.height / 2 - 17) + "px";
+    finger.style.opacity = 1;
+    setTimeout(() => { press(el, null); setTimeout(() => finger.style.opacity = 0, 350); }, 520);
+  }
+
+  let demoLast = 0, beatAt = 0;
+  function demoFrame(now) {
+    const dt = demoLast ? Math.min(0.05, (now - demoLast) / 1000) : 1 / 60;
+    demoLast = now;
+    for (const [el, s] of keySprings) {
+      if (s.wait > 0) { s.wait -= dt; continue; }
+      s.s.step(dt);
+      el.style.transform = `scale(${s.s.value.toFixed(4)})`;
+      if (s.s.settled || !el.isConnected) { el.style.transform = ""; keySprings.delete(el); }
+    }
+    // música de mentira: barras y golpes a 128 bpm
+    if (demo.music && now - beatAt > 469) { beatAt = now; demoView.miri.beat(); }
+    const pump = demo.music ? Math.max(0, 1 - (now - beatAt) / 300) : 0;
+    document.querySelectorAll(".key .viz").forEach(viz => [...viz.children].forEach((b, i) => {
+      const v = demo.music ? 0.25 + 0.45 * Math.abs(Math.sin(now / 260 + i * 1.3)) * (0.6 + 0.4 * Math.sin(now / 900 + i)) + pump * (i < 3 ? 0.35 : 0.1) : 0.08;
+      b.style.height = Math.round(3 + Math.min(1, v) * 27) + "px";
+    }));
+    if (now > toastUntil) toastSpring.target = 0;
+    toastSpring.step(dt);
+    demoToast.style.opacity = Math.max(0, Math.min(1, toastSpring.value));
+    demoToast.style.transform = `translateX(-50%) scale(${0.6 + 0.4 * toastSpring.value})`;
+    ghost(now);
+    requestAnimationFrame(demoFrame);
+  }
+  renderDemo(false);
+  requestAnimationFrame(demoFrame);
+  // al cambiar el idioma, los nombres de los botones también
+  document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => renderDemo(false)));
 </script>
 </body>
 </html>
